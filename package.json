@@ -15,5 +15,9 @@
     "inquirer": "^7.3.3",
     "lodash": "^4.17.20",
     "node-html-parser": "^2.0.0"
+  },
+  "repository": {
+    "type": "git", 
+    "url": "https://github.com/moadabdou/akwam-cli-2.git"
   }
 }
