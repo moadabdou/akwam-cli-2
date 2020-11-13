@@ -1,0 +1,19 @@
+{
+  "name": "akwam2",
+  "version": "0.0.1",
+  "description": "a copy version from mohsine[akwam-cli] project",
+  "main": "index.js",
+  "bin" : {
+    "akwam2" : "./index.js"
+  },
+  "author": "moad abdou",
+  "license": "MIT",
+  "dependencies": {
+    "cli-progress": "^3.8.2",
+    "colors": "^1.4.0",
+    "download-file-with-progressbar": "^1.2.3",
+    "inquirer": "^7.3.3",
+    "lodash": "^4.17.20",
+    "node-html-parser": "^2.0.0"
+  }
+}
