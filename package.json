@@ -1,6 +1,6 @@
 {
   "name": "akwam2",
-  "version": "0.0.1",
+  "version": "1.1.1",
   "description": "a copy version from mohsine[akwam-cli] project",
   "main": "index.js",
   "bin" : {
