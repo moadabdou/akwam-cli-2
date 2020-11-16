@@ -4,10 +4,10 @@ const { prompt } = require("inquirer"),
   { startCase, isEmpty, isFunction } = require("lodash"),
   downloadFileWithProgressbar = require("download-file-with-progressbar"),
   { SingleBar, Presets } = require("cli-progress"),
-  { cyan, green, yellow } = require("colors"),
+  { cyan, yellow } = require("colors"),
   https = require("https"),
   { parse } = require("node-html-parser"),
-  { existsSync, mkdirSync, writeFileSync } = require("fs");
+  { existsSync, mkdirSync } = require("fs");
 
 //host of akwam site
 const akwam = "https://old.akwam.co";
@@ -38,6 +38,13 @@ const outputPath = {
   message: startCase("where you want to save the download file ") + "?",
 };
 
+//options message for multi downloads
+const message = `
+  [-] choose what you want to download
+    + [space] for choose 
+    + [inter] for start downmload choices
+  [!] if you choose nothing will cancel download automatic
+  `
 /* helpers  */
 
 //make a list of choices
@@ -84,8 +91,18 @@ function req(url, options, ob) {
     });
     //listen for the  request end to use data
     response.on("end", () => ob(data));
+  }).on('error', err=> {
+    console.log("[x] please check your connection")
+    throw err 
   });
 }
+
+//cancel download  function 
+function cancel(){
+  console.log('[x] download canceled')
+  main()
+}
+
 
 /* main functions */
 
@@ -143,18 +160,36 @@ function getAllFiles(exact) {
     let list = getLinks(data);
     console.log("[-] " + list.length + " episodes found");
     //ask if the user want to doanload
-    List(
-      list.concat("cancel"),
-      green("[?] what you want to download ?"),
-      ({ exact }) => {
-        if (exact && exact != "cancel") {
-          prepareDownload(exact);
-        } else {
-          console.log("[!] download cancled");
-          main();
+    prompt({
+      name : "ans" , 
+      type : "list", 
+      choices : ['all' , 'choices' , 'cancel'],
+      message : "[?] do you want to download all them or choices ?",
+    }).then(({ ans }) => {
+        if (ans === "cancel") {
+          cancel()
+        } else if(ans === "all"){
+          prepareDownload(list);
+        }else {
+          prompt({
+            name : "list",
+            choices : list,
+            type : "checkbox" ,
+            filter : (choices)=>{
+              return choices.map ((c)=> {
+                return list.find(el=>el.name == c)
+              }) 
+            },
+            message
+          }).then(({list})=>{
+              if (isEmpty(list)) {
+                cancel()
+                return ;
+              }
+              prepareDownload(list)
+          })
         }
-      }
-    );
+      })
   });
 }
 
@@ -165,15 +200,11 @@ function getFileQualties(file) {
     let qualities = getLinks(data);
     //ask if the user want to doanload
     List(
-      qualities.concat("cancel"),
-      green("[?] what you want to download ?"),
+      qualities.concat({name : "cancel"}),
+      "[?] what you want to download ?",
       ({ exact }) => {
-        if (exact && exact != "cancel") {
-          prepareDownload(exact);
-        } else {
-          console.log("[!] download cancled");
-          main();
-        }
+        if (exact.name == "cancel") cancel()
+        else prepareDownload([exact])
       }
     );
   });
@@ -186,12 +217,24 @@ function getFileQualties(file) {
   -folder
   -get the exact download url
 */
-function prepareDownload(infos) {
-  prompt(outputPath).then(({ outputPath }) => {
+function prepareDownload(filesinfos) {
+  //ask for output path
+  prompt(outputPath).then(async ({ outputPath }) => {
     if (!existsSync(outputPath)) {
       mkdirSync(outputPath);
     }
-    infos.out = outputPath;
+    console.log('[>] start download '+filesinfos.length+' files')
+    for (let i = 0; i < filesinfos.length ; i++){
+      filesinfos[i].out =  outputPath
+      console.log('[>] ||||   ('+(i+1)+'/'+filesinfos.length+')   ||||')
+      await downloadWithExactPath(filesinfos[i])
+    }
+  });
+}
+
+//get exact url and download from it
+function downloadWithExactPath(infos){
+  return new Promise(resolve=>{
     req(
       infos.downloadLink,
       {
@@ -202,14 +245,18 @@ function prepareDownload(infos) {
       },
       (data) => {
         infos.downloadLink = JSON.parse(data).direct_link;
-        startDownload(infos);
+        startDownload(infos).then(resolve);
       }
     );
-  });
+  })
 }
 
 //the downloader of files
 function startDownload(infos) {
+  console.log(`
+    [-] start downloand 
+    => ${infos.name}
+  `)
   //new instance from cli-progress
   const downloadProgress = new SingleBar(
     {
@@ -224,19 +271,24 @@ function startDownload(infos) {
   );
   //set the start and end value for progress
   downloadProgress.start(100, 0);
-
-  //start download file
-  downloadFileWithProgressbar(infos.downloadLink, {
-    dir: infos.out,
-    onDone: () => {
-      downloadProgress.stop();
-      console.log(cyan("[+] finish download"));
-    },
-    onError: (err) => {
-      throw err;
-    },
-    onProgress: (curr, total) => {
-      downloadProgress.update((curr / total) * 100);
-    },
-  });
+  downloadProgress.u
+  return new Promise(resolve=>{
+      //start download file
+    downloadFileWithProgressbar(infos.downloadLink, {
+      dir: infos.out,
+      onDone: () => {
+        downloadProgress.stop();
+        console.log(cyan(`
+      [+] finish download
+      => ${infos.name}`));
+        resolve()
+      },
+      onError: (err) => {
+        throw err;
+      },
+      onProgress: (curr, total) => {
+        downloadProgress.update((curr / total) * 100);
+      },
+    });
+  })
 }

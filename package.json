@@ -1,10 +1,10 @@
 {
   "name": "akwam2",
-  "version": "1.1.1",
-  "description": "a copy version from mohsine[akwam-cli] project",
+  "version": "2.1.1",
+  "description": "downloander of films and series from akwam site",
   "main": "index.js",
-  "bin" : {
-    "akwam2" : "./index.js"
+  "bin": {
+    "akwam2": "./index.js"
   },
   "author": "moad abdou",
   "license": "MIT",
@@ -17,7 +17,20 @@
     "node-html-parser": "^2.0.0"
   },
   "repository": {
-    "type": "git", 
+    "type": "git",
     "url": "https://github.com/moadabdou/akwam-cli-2.git"
-  }
+  },
+  "keywords": [
+    "akwam2",
+    "akwam",
+    "اكوام",
+    "akwam downloader",
+    "akwam-cli",
+    "egybest alternative",
+    "download movie",
+    "download game",
+    "download serie",
+    "download anime",
+    "download "
+  ]
 }
