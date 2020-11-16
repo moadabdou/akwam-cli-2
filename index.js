@@ -157,7 +157,7 @@ function getAllFiles(exact) {
   console.log("[+] getting episodes ..");
   req(exact.href, (data) => {
     //file infos
-    let list = getLinks(data);
+    let list = getLinks(data).reverse();
     console.log("[-] " + list.length + " episodes found");
     //ask if the user want to doanload
     prompt({
@@ -186,7 +186,7 @@ function getAllFiles(exact) {
                 cancel()
                 return ;
               }
-              prepareDownload(list.reverse())
+              prepareDownload(list)
           })
         }
       })
