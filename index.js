@@ -186,7 +186,7 @@ function getAllFiles(exact) {
                 cancel()
                 return ;
               }
-              prepareDownload(list)
+              prepareDownload(list.reverse())
           })
         }
       })
