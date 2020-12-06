@@ -76,8 +76,52 @@ function getLinks(html) {
   });
 }
 
+//this for get the link from a short link site 
+// that akwam start using it 
+function getLink(href ,ob){
+  href = href.replace('http' , 'https')
+  return new Promise(r=>{
+    https.get(href , res => {
+      let c = cookies(res.headers), 
+        link = decodeLink(c.golink)
+
+        // modern XD
+        ob(
+          link.route
+          .replace('%3A' , ':')
+          .replace(/%2F/gim, '')
+          .replace(/\\/gim, '/')
+          )
+    })
+  })
+}
+
+
+//decode cookies
+function cookies(headers){
+  let cs =  {}, 
+    hcookies =  headers["set-cookie"][1]
+  hcookies.split(';').forEach(cn=>{
+    cn = cn.split('=')
+    cs[cn[0]] = cn[1]
+  })
+  return cs 
+}
+
+//decode link
+function decodeLink (hash){
+  hash =  decodeURI(hash).replace(/\{|\}/gim, '')
+  let ls =  {}
+  hash.split('%2C').forEach(l=>{
+    l = l.split('"%3A')
+    ls[l[0].slice(1)] = l[1].replace(/"/gim, '')
+  })
+  return ls;
+}
+
 //make an https request
 function req(url, options, ob) {
+
   if (isFunction(options)) {
     (ob = options), (options = {});
   }
@@ -235,19 +279,22 @@ function prepareDownload(filesinfos) {
 //get exact url and download from it
 function downloadWithExactPath(infos){
   return new Promise(resolve=>{
-    req(
-      infos.downloadLink,
-      {
-        headers: {
-          referer: infos.downloadLink,
-          "x-requested-with": "XMLHttpRequest",
+    getLink(infos.downloadLink , exactLink =>{
+      req(
+        exactLink,
+        {
+          headers: {
+            referer: exactLink,
+            "x-requested-with": "XMLHttpRequest",
+          },
         },
-      },
-      (data) => {
-        infos.downloadLink = JSON.parse(data).direct_link;
-        startDownload(infos).then(resolve);
-      }
-    );
+        (data) => {
+          infos.downloadLink = JSON.parse(data).direct_link;
+          startDownload(infos).then(resolve);
+        }
+
+      );
+    })
   })
 }
 
@@ -271,7 +318,6 @@ function startDownload(infos) {
   );
   //set the start and end value for progress
   downloadProgress.start(100, 0);
-  downloadProgress.u
   return new Promise(resolve=>{
       //start download file
     downloadFileWithProgressbar(infos.downloadLink, {

@@ -1,6 +1,6 @@
 {
   "name": "akwam2",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "downloander of films and series from akwam site",
   "main": "index.js",
   "bin": {
